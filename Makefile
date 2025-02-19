@@ -10,7 +10,7 @@ CPPFLAGS =
 LDLIBS =
 LDFLAGS = -pthread
 
-.PHONY: all clean fclean re
+.PHONY: all clean fclean re norm
 
 all: $(PROJ_NAME)
 
