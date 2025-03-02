@@ -1,31 +1,49 @@
-PROJ_NAME = philo
-PROJ_SRCS = ph_main.c
-PROJ_HDRS = ph_main.h
-PROJ_OBJS = $(PROJ_SRCS:.c=.o)
-PROJ_DEPS = $(PROJ_OBJS:.o=.d)
+MAKEFLAGS += --no-print-directory
 
-CFLAGS += -Wall -Wextra -g3 -MMD
-CFLAGS += -fsanitize=thread
-CPPFLAGS =
-LDLIBS =
-LDFLAGS = -pthread
+NAME   ?= philo
+OBJDIR ?= build/release
 
-.PHONY: all clean fclean re norm
+srcs := ph_main.c
+hdrs := ph_main.h
+objs := $(addprefix $(OBJDIR)/, $(srcs:.c=.o))
+deps := $(objs:.o=.d)
 
-all: $(PROJ_NAME)
+.PHONY: all _target release debug clean fclean re
 
-clean:
-	$(RM) $(PROJ_OBJS) $(PROJ_DEPS)
+all: debug asan tsan
 
-fclean: clean
-	$(RM) $(PROJ_NAME)
+_target: $(NAME)
 
-re: fclean all
+$(NAME): $(objs)
+	$(CC) $(CFLAGS) -o $@ $^
+
+$(OBJDIR)/%.o: %.c
+	@mkdir -p $(@D)
+	$(CC) $(CFLAGS) -MMD -MP -c -o $@ $<
+
+-include $(DEPS)
+
+release:
+	$(MAKE) NAME=philo OBJDIR=build/$@ CFLAGS="-Wall -Wextra -Werror" _target
+
+debug:
+	$(MAKE) NAME=philo-$@ OBJDIR=build/$@ CFLAGS="-Wall -Wextra -ggdb3" _target
+
+asan:
+	$(MAKE) NAME=philo-$@ OBJDIR=build/$@ CFLAGS="-Wall -Wextra -ggdb3 -fsanitize=address,undefined" _target
+
+tsan:
+	$(MAKE) NAME=philo-$@ OBJDIR=build/$@ CFLAGS="-Wall -Wextra -ggdb3 -fsanitize=thread,undefined" _target
 
 norm:
-	-norminette $(PROJ_SRCS) $(PROJ_HDRS)
+	-norminette $(srcs) $(hdrs)
 
-$(PROJ_NAME): $(PROJ_OBJS)
-	$(CC) $(CFLAGS) $(CPPFLAGS) -o $(PROJ_NAME) $(PROJ_OBJS) $(LDLIBS) $(LDFLAGS)
+clean:
+	rm -rf build
 
--include $(PROJ_DEPS)
+fclean: clean
+	rm -f $(NAME) $(NAME)-*
+
+re:
+	$(MAKE) fclean
+	$(MAKE) all
