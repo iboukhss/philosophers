@@ -6,7 +6,7 @@
 /*   By: iboukhss <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/19 21:35:24 by iboukhss          #+#    #+#             */
-/*   Updated: 2025/02/20 20:06:32 by iboukhss         ###   ########.fr       */
+/*   Updated: 2025/03/03 15:43:25 by iboukhss         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,8 +23,8 @@ typedef struct s_simulation
 	long			time_to_sleep;
 	int				meals_required;
 	pthread_mutex_t	*forks;
-	struct timeval	start_time;
-	struct timeval	stop_time;
+	long			start_time;
+	long			stop_time;
 }	t_simulation;
 
 typedef struct s_philosopher

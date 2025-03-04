@@ -6,7 +6,7 @@
 /*   By: iboukhss <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 12:25:06 by iboukhss          #+#    #+#             */
-/*   Updated: 2025/02/25 22:57:14 by iboukhss         ###   ########.fr       */
+/*   Updated: 2025/03/04 13:17:37 by iboukhss         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,21 +17,49 @@
 
 #include "ph_main.h"
 
+long	get_time_in_ms(void)
+{
+	struct timeval	time;
+
+	gettimeofday(&time, NULL);
+	return (time.tv_sec * 1000 + time.tv_usec / 1000);
+}
+
 static void	*routine(void *arg)
 {
 	t_philosopher	*philo;
-	struct timeval	current_time;
+	long			start_time;
+	long			stop_time;
 	long			time_elapsed;
 
 	philo = (t_philosopher *)arg;
-	usleep(5000);
-	gettimeofday(&current_time, NULL);
-	time_elapsed = (current_time.tv_usec - philo->sim->start_time.tv_usec) / 1000;
-	printf("Started philo %d after %ld milliseconds\n", philo->id, time_elapsed);
+	start_time = philo->sim->start_time;
+	stop_time = get_time_in_ms();
+	time_elapsed = stop_time - start_time;
+	printf("%6ld %d is sleeping 🌜\n", time_elapsed, philo->id);
+	usleep(philo->sim->time_to_sleep * 1000);
+	while (1)
+	{
+		stop_time = get_time_in_ms();
+		time_elapsed = stop_time - start_time;
+		printf("%6ld %d is thinking 💭\n", time_elapsed, philo->id);
+		usleep(4000 * 1000);
+	}
+	printf("Ended philo %d\n", philo->id);
 	return (NULL);
 }
 
-int	main(int argc, char *argv[])
+static int	init_simulation(t_simulation *sim, int argc, char **argv)
+{
+	sim->philo_count = atoi(argv[1]);
+	sim->time_to_die = strtol(argv[2], NULL, 10);
+	sim->time_to_eat = strtol(argv[3], NULL, 10);
+	sim->time_to_sleep = strtol(argv[4], NULL, 10);
+	sim->meals_required = argc == 6 ? atoi(argv[5]) : -1;
+	return (0);
+}
+
+int	main(int argc, char **argv)
 {
 	t_simulation	sim;
 	t_philosopher	*philo;
@@ -43,14 +71,10 @@ int	main(int argc, char *argv[])
 	}
 
 	// Init user input parameters
-	sim.philo_count = atoi(argv[1]);
-	sim.time_to_die = strtol(argv[2], NULL, 10);
-	sim.time_to_eat = strtol(argv[3], NULL, 10);
-	sim.time_to_sleep = strtol(argv[4], NULL, 10);
-	sim.meals_required = argc == 6 ? atoi(argv[5]) : -1;
+	init_simulation(&sim, argc, argv);
 
 	// Start timer
-	gettimeofday(&sim.start_time, NULL);
+	sim.start_time = get_time_in_ms();
 
 	// Create forks (mutexes)
 	sim.forks = malloc(sim.philo_count * sizeof(*sim.forks));
@@ -75,8 +99,8 @@ int	main(int argc, char *argv[])
 	}
 
 	// Stop timer
-	gettimeofday(&sim.stop_time, NULL);
-	printf("Total time elapsed: %ld milliseconds\n", (sim.stop_time.tv_usec - sim.start_time.tv_usec) / 1000);
+	sim.stop_time = get_time_in_ms();
+	printf("Total time elapsed: %ld milliseconds\n", sim.stop_time - sim.start_time);
 
 	// Cleanup
 	for (int i = 0; i < sim.philo_count; i++)
