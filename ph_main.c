@@ -6,7 +6,7 @@
 /*   By: iboukhss <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 12:25:06 by iboukhss          #+#    #+#             */
-/*   Updated: 2025/03/08 13:39:34 by iboukhss         ###   ########.fr       */
+/*   Updated: 2025/03/08 13:49:34 by iboukhss         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,11 +25,20 @@ static long	get_time_in_ms(void)
 	return (time.tv_sec * 1000 + time.tv_usec / 1000);
 }
 
+static bool	simulation_is_running(t_simulation *sim)
+{
+	bool	is_running;
+
+	pthread_mutex_lock(&sim->run_lock);
+	is_running = sim->is_running;
+	pthread_mutex_unlock(&sim->run_lock);
+	return (is_running);
+}
+
 static void	*philo_routine(void *arg)
 {
 	t_philosopher	*philo;
 	long			start_time;
-	bool			is_still_running;
 	bool			can_eat;
 
 	philo = (t_philosopher *)arg;
@@ -37,17 +46,8 @@ static void	*philo_routine(void *arg)
 	start_time = get_time_in_ms();
 	philo->last_meal_time = start_time;
 	pthread_mutex_unlock(&philo->meal_count_lock);
-	while (1)
+	while (simulation_is_running(philo->sim))
 	{
-		// Check the simulation is still running
-		pthread_mutex_lock(&philo->sim->run_lock);
-		is_still_running = philo->sim->is_running;
-		pthread_mutex_unlock(&philo->sim->run_lock);
-		if (!is_still_running)
-		{
-			return (NULL);
-		}
-
 		enqueue(&philo->sim->req_queue, philo);
 
 		// Thinking phase
@@ -55,15 +55,10 @@ static void	*philo_routine(void *arg)
 
 		while (1)
 		{
-			// Check the simulation is still running
-			pthread_mutex_lock(&philo->sim->run_lock);
-			is_still_running = philo->sim->is_running;
-			pthread_mutex_unlock(&philo->sim->run_lock);
-			if (!is_still_running)
+			if (!simulation_is_running(philo->sim))
 			{
 				return (NULL);
 			}
-
 			pthread_mutex_lock(&philo->state_lock);
 			can_eat = philo->state == EATING ? true : false;			
 			pthread_mutex_unlock(&philo->state_lock);
@@ -112,11 +107,7 @@ static void	*philo_routine(void *arg)
 		philo->state = HUNGRY;
 		pthread_mutex_unlock(&philo->state_lock);
 
-		// Check the simulation is still running
-		pthread_mutex_lock(&philo->sim->run_lock);
-		is_still_running = philo->sim->is_running;
-		pthread_mutex_unlock(&philo->sim->run_lock);
-		if (!is_still_running)
+		if (!simulation_is_running(philo->sim))
 		{
 			return (NULL);
 		}
@@ -131,27 +122,14 @@ static void	*philo_routine(void *arg)
 static void	*waiter_routine(void *arg)
 {
 	t_simulation	*sim;
-	bool			is_still_running;
-	int				req_id;
 	t_philosopher	*req;
-	t_philosopher	*left;
-	t_philosopher	*right;
 	bool			left_eating;
 	bool			right_eating;
 	bool			queue_not_empty;
 
 	sim = (t_simulation *)arg;
-	while (1)
+	while (simulation_is_running(sim))
 	{
-		// Check the simulation is still running
-		pthread_mutex_lock(&sim->run_lock);
-		is_still_running = sim->is_running;
-		pthread_mutex_unlock(&sim->run_lock);
-		if (!is_still_running)
-		{
-			return (NULL);
-		}
-
 		pthread_mutex_lock(&sim->req_queue.lock);
 		queue_not_empty = sim->req_queue.length > 0 ? true : false;
 		pthread_mutex_unlock(&sim->req_queue.lock);
@@ -160,15 +138,15 @@ static void	*waiter_routine(void *arg)
 			pthread_mutex_lock(&sim->req_queue.lock);
 			req = sim->req_queue.items[sim->req_queue.head];
 			pthread_mutex_unlock(&sim->req_queue.lock);
-			req_id = req->id;
-			left = &sim->philos[(req_id + sim->philo_count - 2) % sim->philo_count];
-			right = &sim->philos[req_id % sim->philo_count];
-			pthread_mutex_lock(&left->state_lock);
-			left_eating = left->state == EATING ? true : false;
-			pthread_mutex_unlock(&left->state_lock);
-			pthread_mutex_lock(&right->state_lock);
-			right_eating = right->state == EATING ? true : false;
-			pthread_mutex_unlock(&right->state_lock);
+
+			pthread_mutex_lock(&req->left->state_lock);
+			left_eating = req->left->state == EATING ? true : false;
+			pthread_mutex_unlock(&req->left->state_lock);
+
+			pthread_mutex_lock(&req->right->state_lock);
+			right_eating = req->right->state == EATING ? true : false;
+			pthread_mutex_unlock(&req->right->state_lock);
+
 			if (!left_eating && !right_eating)
 			{
 				pthread_mutex_lock(&req->state_lock);
@@ -262,6 +240,8 @@ static int	init_simulation(t_simulation *sim, int argc, char **argv)
 	for (int i = 0; i < sim->philo_count; i++)
 	{
 		sim->philos[i].id = i + 1;
+		sim->philos[i].left = &sim->philos[(i + sim->philo_count - 1) % sim->philo_count];
+		sim->philos[i].right = &sim->philos[(i + 1) % sim->philo_count];
 		sim->philos[i].left_fork = &sim->forks[i];
 		sim->philos[i].right_fork = &sim->forks[(i + 1) % sim->philo_count];
 		sim->philos[i].last_meal_time = -1;
