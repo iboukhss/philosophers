@@ -6,7 +6,7 @@
 /*   By: iboukhss <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 12:25:06 by iboukhss          #+#    #+#             */
-/*   Updated: 2025/03/08 13:22:28 by iboukhss         ###   ########.fr       */
+/*   Updated: 2025/03/08 13:39:34 by iboukhss         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -298,6 +298,10 @@ static int	destroy_simulation(t_simulation *sim)
 	}
 
 	pthread_mutex_destroy(&sim->run_lock);
+
+	// Destroy queues
+	destroy_queue(&sim->req_queue);
+	destroy_queue(&sim->wait_queue);
 
 	// Free allocated memory
 	free(sim->philos);
