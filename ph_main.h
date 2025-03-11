@@ -6,7 +6,7 @@
 /*   By: iboukhss <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/19 21:35:24 by iboukhss          #+#    #+#             */
-/*   Updated: 2025/03/08 15:53:34 by iboukhss         ###   ########.fr       */
+/*   Updated: 2025/03/11 15:26:58 by iboukhss         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -50,6 +50,7 @@ typedef struct s_simulation
 	t_queue			wait_queue;
 	bool			is_running;
 	pthread_mutex_t	run_lock;
+	pthread_mutex_t	log_lock;
 }	t_simulation;
 
 typedef struct s_philosopher
@@ -60,6 +61,7 @@ typedef struct s_philosopher
 	t_philosopher	*right;
 	pthread_mutex_t	*left_fork;
 	pthread_mutex_t	*right_fork;
+	long			start_time;
 	long			last_meal_time;
 	int				meal_count;
 	pthread_mutex_t	meal_count_lock;

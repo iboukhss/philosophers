@@ -6,7 +6,7 @@
 /*   By: iboukhss <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 12:25:06 by iboukhss          #+#    #+#             */
-/*   Updated: 2025/03/11 15:11:01 by iboukhss         ###   ########.fr       */
+/*   Updated: 2025/03/11 18:33:36 by iboukhss         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,6 +25,13 @@ static long	get_time_in_ms(void)
 	return (time.tv_sec * 1000 + time.tv_usec / 1000);
 }
 
+static void	log_philo_state(t_philosopher *philo, const char *msg)
+{
+	pthread_mutex_lock(&philo->sim->log_lock);
+	printf("%7ld %4d %s\n", get_time_in_ms() - philo->start_time, philo->id, msg);
+	pthread_mutex_unlock(&philo->sim->log_lock);
+}
+
 static bool	simulation_is_running(t_simulation *sim)
 {
 	bool	is_running;
@@ -38,20 +45,19 @@ static bool	simulation_is_running(t_simulation *sim)
 static void	*philo_routine(void *arg)
 {
 	t_philosopher	*philo;
-	long			start_time;
 	bool			can_eat;
 
 	philo = (t_philosopher *)arg;
 	pthread_mutex_lock(&philo->meal_count_lock);
-	start_time = get_time_in_ms();
-	philo->last_meal_time = start_time;
+	philo->start_time = get_time_in_ms();
+	philo->last_meal_time = philo->start_time;
 	pthread_mutex_unlock(&philo->meal_count_lock);
 	while (simulation_is_running(philo->sim))
 	{
 		enqueue(&philo->sim->req_queue, philo);
 
 		// Thinking phase
-		printf("%6ld %3d is thinking\n", get_time_in_ms() - start_time, philo->id);
+		log_philo_state(philo, "is thinking");
 
 		while (1)
 		{
@@ -60,7 +66,7 @@ static void	*philo_routine(void *arg)
 				return (NULL);
 			}
 			pthread_mutex_lock(&philo->state_lock);
-			can_eat = philo->state == EATING ? true : false;			
+			can_eat = (philo->state == EATING);
 			pthread_mutex_unlock(&philo->state_lock);
 			if (can_eat)
 			{
@@ -75,16 +81,16 @@ static void	*philo_routine(void *arg)
 		// confident that's a false positive.
 
 		pthread_mutex_lock(philo->left_fork);
-		printf("%6ld %3d has taken a fork\n", get_time_in_ms() - start_time, philo->id);
+		log_philo_state(philo, "has taken a fork");
 		pthread_mutex_lock(philo->right_fork);
-		printf("%6ld %3d has taken a fork\n", get_time_in_ms() - start_time, philo->id);
+		log_philo_state(philo, "has taken a fork");
 
 		pthread_mutex_lock(&philo->meal_count_lock);
 		philo->last_meal_time = get_time_in_ms();
 		philo->meal_count++;
 		pthread_mutex_unlock(&philo->meal_count_lock);
 
-		printf("%6ld %3d is eating\n", get_time_in_ms() - start_time, philo->id);
+		log_philo_state(philo, "is eating");
 		usleep(philo->sim->time_to_eat * 1000);
 
 		pthread_mutex_unlock(philo->left_fork);
@@ -100,7 +106,7 @@ static void	*philo_routine(void *arg)
 		}
 
 		// Sleeping phase
-		printf("%6ld %3d is sleeping\n", get_time_in_ms() - start_time, philo->id);
+		log_philo_state(philo, "is sleeping");
 		usleep(philo->sim->time_to_sleep * 1000);
 	}
 	return (NULL);
@@ -207,7 +213,7 @@ static void	*monitor_routine(void *arg)
 			elapsed_time = current_time - last_meal_time;
 			if (elapsed_time > sim->time_to_die)
 			{
-				printf("%6ld %3d died 💀 (after %ld milliseconds)\n", current_time - sim->start_time, i + 1, elapsed_time);
+				log_philo_state(&sim->philos[i], "died");
 				pthread_mutex_lock(&sim->run_lock);
 				sim->is_running = false;
 				pthread_mutex_unlock(&sim->run_lock);
@@ -267,6 +273,7 @@ static int	init_simulation(t_simulation *sim, int argc, char **argv)
 		sim->philos[i].right = &sim->philos[(i + 1) % sim->philo_count];
 		sim->philos[i].left_fork = &sim->forks[i];
 		sim->philos[i].right_fork = &sim->forks[(i + 1) % sim->philo_count];
+		sim->philos[i].start_time = -1;
 		sim->philos[i].last_meal_time = -1;
 		sim->philos[i].meal_count = 0;
 		pthread_mutex_init(&sim->philos[i].meal_count_lock, NULL);
@@ -282,6 +289,7 @@ static int	init_simulation(t_simulation *sim, int argc, char **argv)
 	// Remaining values
 	sim->is_running = true;
 	pthread_mutex_init(&sim->run_lock, NULL);
+	pthread_mutex_init(&sim->log_lock, NULL);
 	return (0);
 }
 
@@ -301,6 +309,7 @@ static int	destroy_simulation(t_simulation *sim)
 	}
 
 	pthread_mutex_destroy(&sim->run_lock);
+	pthread_mutex_destroy(&sim->log_lock);
 
 	// Destroy queues
 	destroy_queue(&sim->req_queue);
