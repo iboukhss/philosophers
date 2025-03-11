@@ -6,7 +6,7 @@
 /*   By: iboukhss <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/19 21:35:24 by iboukhss          #+#    #+#             */
-/*   Updated: 2025/03/11 15:26:58 by iboukhss         ###   ########.fr       */
+/*   Updated: 2025/03/11 21:13:40 by iboukhss         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -75,5 +75,14 @@ int				destroy_queue(t_queue *q);
 int				enqueue(t_queue *q, t_philosopher *philo);
 t_philosopher	*dequeue(t_queue *q);
 t_philosopher	*peek(t_queue *q);
+
+void			*monitor_routine(void *arg);
+void			*waiter_routine(void *arg);
+void			*philo_routine(void *arg);
+
+long			get_time_in_ms(void);
+void			log_philo_state(t_philosopher *philo, const char *msg);
+bool			simulation_is_running(t_simulation *sim);
+bool			neighbors_are_eating(t_philosopher *philo);
 
 #endif
