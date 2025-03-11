@@ -6,7 +6,7 @@
 /*   By: iboukhss <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/19 21:35:24 by iboukhss          #+#    #+#             */
-/*   Updated: 2025/03/08 13:30:41 by iboukhss         ###   ########.fr       */
+/*   Updated: 2025/03/08 15:53:34 by iboukhss         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -72,5 +72,6 @@ int				init_queue(t_queue *q, int capacity);
 int				destroy_queue(t_queue *q);
 int				enqueue(t_queue *q, t_philosopher *philo);
 t_philosopher	*dequeue(t_queue *q);
+t_philosopher	*peek(t_queue *q);
 
 #endif

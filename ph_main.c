@@ -6,7 +6,7 @@
 /*   By: iboukhss <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 12:25:06 by iboukhss          #+#    #+#             */
-/*   Updated: 2025/03/08 13:49:34 by iboukhss         ###   ########.fr       */
+/*   Updated: 2025/03/11 15:11:01 by iboukhss         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -66,31 +66,18 @@ static void	*philo_routine(void *arg)
 			{
 				break ;
 			}
-			usleep(2000);
+			usleep(200);
 		}
 
 		// Eating phase
 
-		// NOTE: The following branching is not necessary because we already have a waiter
-		// thread that ensures forks are only handed to philosophers that don't have a
-		// neighbor eating.
-		// However, I still added it to silence TSAN warnings about lock-order-inversion,
-		// which, from my understanding are false positives.
-		if (philo->id % 2 == 0)
-		{
-			pthread_mutex_lock(philo->left_fork);
-			printf("%6ld %3d has taken a fork\n", get_time_in_ms() - start_time, philo->id);
-			usleep(1111);
-			pthread_mutex_lock(philo->right_fork);
-			printf("%6ld %3d has taken a fork\n", get_time_in_ms() - start_time, philo->id);
-		}
-		else
-		{
-			pthread_mutex_lock(philo->right_fork);
-			printf("%6ld %3d has taken a fork\n", get_time_in_ms() - start_time, philo->id);
-			pthread_mutex_lock(philo->left_fork);
-			printf("%6ld %3d has taken a fork\n", get_time_in_ms() - start_time, philo->id);
-		}
+		// NOTE: TSAN may complain about lock-order-inversion but I am fairly
+		// confident that's a false positive.
+
+		pthread_mutex_lock(philo->left_fork);
+		printf("%6ld %3d has taken a fork\n", get_time_in_ms() - start_time, philo->id);
+		pthread_mutex_lock(philo->right_fork);
+		printf("%6ld %3d has taken a fork\n", get_time_in_ms() - start_time, philo->id);
 
 		pthread_mutex_lock(&philo->meal_count_lock);
 		philo->last_meal_time = get_time_in_ms();
@@ -119,35 +106,71 @@ static void	*philo_routine(void *arg)
 	return (NULL);
 }
 
+static bool	neighbors_are_eating(t_philosopher *philo)
+{
+	bool	left_eating;
+	bool	right_eating;
+
+	pthread_mutex_lock(&philo->left->state_lock);
+	left_eating = (philo->left->state == EATING);
+	pthread_mutex_unlock(&philo->left->state_lock);
+	pthread_mutex_lock(&philo->right->state_lock);
+	right_eating = (philo->right->state == EATING);
+	pthread_mutex_unlock(&philo->right->state_lock);
+	return (left_eating || right_eating);
+}
+
 static void	*waiter_routine(void *arg)
 {
 	t_simulation	*sim;
+	t_philosopher	*wait;
+	t_philosopher	*new_wait;
 	t_philosopher	*req;
-	bool			left_eating;
-	bool			right_eating;
-	bool			queue_not_empty;
 
 	sim = (t_simulation *)arg;
 	while (simulation_is_running(sim))
 	{
-		pthread_mutex_lock(&sim->req_queue.lock);
-		queue_not_empty = sim->req_queue.length > 0 ? true : false;
-		pthread_mutex_unlock(&sim->req_queue.lock);
-		if (queue_not_empty)
+		// Check the wait queue first
+		while (1)
 		{
-			pthread_mutex_lock(&sim->req_queue.lock);
-			req = sim->req_queue.items[sim->req_queue.head];
-			pthread_mutex_unlock(&sim->req_queue.lock);
+			wait = peek(&sim->wait_queue);
 
-			pthread_mutex_lock(&req->left->state_lock);
-			left_eating = req->left->state == EATING ? true : false;
-			pthread_mutex_unlock(&req->left->state_lock);
+			if (!wait)
+			{
+				break ;
+			}
 
-			pthread_mutex_lock(&req->right->state_lock);
-			right_eating = req->right->state == EATING ? true : false;
-			pthread_mutex_unlock(&req->right->state_lock);
+			// Ping pong back and forth with the request and wait queue
+			if (neighbors_are_eating(wait))
+			{
+				break ;
+			}
+			else
+			{
+				pthread_mutex_lock(&wait->state_lock);
+				wait->state = EATING;
+				pthread_mutex_unlock(&wait->state_lock);
+				dequeue(&sim->wait_queue);
+			}
+		}
 
-			if (!left_eating && !right_eating)
+		// Check the request queue right after
+		req = peek(&sim->req_queue);
+
+		if (req)
+		{
+			// Special case, requested item is a neighbor of #1 in wait queue
+			if (wait && (req == wait->left || req == wait->right))
+			{
+				new_wait = dequeue(&sim->req_queue);
+				enqueue(&sim->wait_queue, new_wait);
+			}
+			else if (neighbors_are_eating(req))
+			{
+				new_wait = dequeue(&sim->req_queue);
+				enqueue(&sim->wait_queue, new_wait);
+			}
+			else
 			{
 				pthread_mutex_lock(&req->state_lock);
 				req->state = EATING;
@@ -155,7 +178,7 @@ static void	*waiter_routine(void *arg)
 				dequeue(&sim->req_queue);
 			}
 		}
-		usleep(1000);
+		usleep(500);
 	}
 	return (NULL);
 }
