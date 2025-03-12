@@ -6,7 +6,7 @@
 /*   By: iboukhss <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/12 02:42:21 by iboukhss          #+#    #+#             */
-/*   Updated: 2025/03/12 11:25:44 by iboukhss         ###   ########.fr       */
+/*   Updated: 2025/03/12 14:35:58 by iboukhss         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,22 +14,12 @@
 
 #include <stdlib.h>
 
-int	init_simulation(t_simulation *sim, int argc, char **argv)
+static int	init_philosophers(t_simulation *sim)
 {
-	sim->philo_count = atoi(argv[1]);
-	sim->time_to_die = strtol(argv[2], NULL, 10);
-	sim->time_to_eat = strtol(argv[3], NULL, 10);
-	sim->time_to_sleep = strtol(argv[4], NULL, 10);
-	sim->meals_required = argc == 6 ? atoi(argv[5]) : -1;
-	sim->start_time = -1;
-	sim->stop_time = -1;
-	sim->philos = malloc(sim->philo_count * sizeof(*sim->philos));
-	sim->forks = malloc(sim->philo_count * sizeof(*sim->forks));
-	for (int i = 0; i < sim->philo_count; i++)
-	{
-		pthread_mutex_init(&sim->forks[i], NULL);
-	}
-	for (int i = 0; i < sim->philo_count; i++)
+	int	i;
+
+	i = 0;
+	while (i < sim->philo_count)
 	{
 		sim->philos[i].id = i + 1;
 		sim->philos[i].left = &sim->philos[(i + sim->philo_count - 1) % sim->philo_count];
@@ -43,25 +33,50 @@ int	init_simulation(t_simulation *sim, int argc, char **argv)
 		sim->philos[i].state = HUNGRY;
 		pthread_mutex_init(&sim->philos[i].state_lock, NULL);
 		sim->philos[i].sim = sim;
+		i++;
+	}
+	return (0);
+}
+
+int	init_simulation(t_simulation *sim)
+{
+	int	i;
+
+	sim->is_running = true;
+	sim->start_time = -1;
+	sim->stop_time = -1;
+	sim->philos = malloc(sim->philo_count * sizeof(*sim->philos));
+	sim->forks = malloc(sim->philo_count * sizeof(*sim->forks));
+	i = 0;
+	while (i < sim->philo_count)
+	{
+		pthread_mutex_init(&sim->forks[i], NULL);
+		i++;
 	}
 	init_queue(&sim->req_queue, sim->philo_count);
 	init_queue(&sim->wait_queue, sim->philo_count);
-	sim->is_running = true;
 	pthread_mutex_init(&sim->run_lock, NULL);
 	pthread_mutex_init(&sim->log_lock, NULL);
+	init_philosophers(sim);
 	return (0);
 }
 
 int	destroy_simulation(t_simulation *sim)
 {
-	for (int i = 0; i < sim->philo_count; i++)
+	int	i;
+
+	i = 0;
+	while (i < sim->philo_count)
 	{
 		pthread_mutex_destroy(&sim->forks[i]);
+		i++;
 	}
-	for (int i = 0; i < sim->philo_count; i++)
+	i = 0;
+	while (i < sim->philo_count)
 	{
 		pthread_mutex_destroy(&sim->philos[i].meal_lock);
 		pthread_mutex_destroy(&sim->philos[i].state_lock);
+		i++;
 	}
 	pthread_mutex_destroy(&sim->run_lock);
 	pthread_mutex_destroy(&sim->log_lock);
