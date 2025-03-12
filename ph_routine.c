@@ -6,7 +6,7 @@
 /*   By: iboukhss <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/11 21:07:34 by iboukhss          #+#    #+#             */
-/*   Updated: 2025/03/11 23:04:55 by iboukhss         ###   ########.fr       */
+/*   Updated: 2025/03/12 11:25:45 by iboukhss         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -43,10 +43,10 @@ static void	eating_phase(t_philosopher *philo)
 		log_philo_state(philo, "has taken a fork");
 		pthread_mutex_lock(philo->right_fork);
 		log_philo_state(philo, "has taken a fork");
-		pthread_mutex_lock(&philo->meal_count_lock);
+		pthread_mutex_lock(&philo->meal_lock);
 		philo->last_meal_time = get_time_in_ms();
 		philo->meal_count++;
-		pthread_mutex_unlock(&philo->meal_count_lock);
+		pthread_mutex_unlock(&philo->meal_lock);
 		log_philo_state(philo, "is eating");
 		usleep(philo->sim->time_to_eat * 1000);
 		pthread_mutex_unlock(philo->left_fork);
@@ -71,10 +71,10 @@ void	*philo_routine(void *arg)
 	t_philosopher	*philo;
 
 	philo = (t_philosopher *)arg;
-	pthread_mutex_lock(&philo->meal_count_lock);
+	pthread_mutex_lock(&philo->meal_lock);
 	philo->start_time = get_time_in_ms();
 	philo->last_meal_time = philo->start_time;
-	pthread_mutex_unlock(&philo->meal_count_lock);
+	pthread_mutex_unlock(&philo->meal_lock);
 	while (simulation_is_running(philo->sim))
 	{
 		thinking_phase(philo);

@@ -6,7 +6,7 @@
 /*   By: iboukhss <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/19 21:35:24 by iboukhss          #+#    #+#             */
-/*   Updated: 2025/03/12 02:43:27 by iboukhss         ###   ########.fr       */
+/*   Updated: 2025/03/12 11:25:43 by iboukhss         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -64,7 +64,7 @@ typedef struct s_philosopher
 	long			start_time;
 	long			last_meal_time;
 	int				meal_count;
-	pthread_mutex_t	meal_count_lock;
+	pthread_mutex_t	meal_lock;
 	enum e_state	state;
 	pthread_mutex_t	state_lock;
 	t_simulation	*sim;

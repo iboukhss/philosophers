@@ -6,7 +6,7 @@
 /*   By: iboukhss <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/11 21:05:14 by iboukhss          #+#    #+#             */
-/*   Updated: 2025/03/12 02:21:56 by iboukhss         ###   ########.fr       */
+/*   Updated: 2025/03/12 11:25:44 by iboukhss         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,9 +22,9 @@ static void	check_last_meal_time(t_simulation *sim)
 
 	for (int i = 0; i < sim->philo_count; i++)
 	{
-		pthread_mutex_lock(&sim->philos[i].meal_count_lock);
+		pthread_mutex_lock(&sim->philos[i].meal_lock);
 		last_meal_time = sim->philos[i].last_meal_time;
-		pthread_mutex_unlock(&sim->philos[i].meal_count_lock);
+		pthread_mutex_unlock(&sim->philos[i].meal_lock);
 		if (last_meal_time == -1)
 		{
 			continue ;
@@ -50,9 +50,9 @@ static void	check_meal_count(t_simulation *sim)
 	{
 		for (int i = 0; i < sim->philo_count; i++)
 		{
-			pthread_mutex_lock(&sim->philos[i].meal_count_lock);
+			pthread_mutex_lock(&sim->philos[i].meal_lock);
 			meal_count = sim->philos[i].meal_count;
-			pthread_mutex_unlock(&sim->philos[i].meal_count_lock);
+			pthread_mutex_unlock(&sim->philos[i].meal_lock);
 			if (meal_count < sim->meals_required)
 			{
 				return ;

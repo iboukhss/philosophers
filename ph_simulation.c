@@ -6,7 +6,7 @@
 /*   By: iboukhss <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/12 02:42:21 by iboukhss          #+#    #+#             */
-/*   Updated: 2025/03/12 02:43:45 by iboukhss         ###   ########.fr       */
+/*   Updated: 2025/03/12 11:25:44 by iboukhss         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,7 +39,7 @@ int	init_simulation(t_simulation *sim, int argc, char **argv)
 		sim->philos[i].start_time = -1;
 		sim->philos[i].last_meal_time = -1;
 		sim->philos[i].meal_count = 0;
-		pthread_mutex_init(&sim->philos[i].meal_count_lock, NULL);
+		pthread_mutex_init(&sim->philos[i].meal_lock, NULL);
 		sim->philos[i].state = HUNGRY;
 		pthread_mutex_init(&sim->philos[i].state_lock, NULL);
 		sim->philos[i].sim = sim;
@@ -60,7 +60,7 @@ int	destroy_simulation(t_simulation *sim)
 	}
 	for (int i = 0; i < sim->philo_count; i++)
 	{
-		pthread_mutex_destroy(&sim->philos[i].meal_count_lock);
+		pthread_mutex_destroy(&sim->philos[i].meal_lock);
 		pthread_mutex_destroy(&sim->philos[i].state_lock);
 	}
 	pthread_mutex_destroy(&sim->run_lock);
