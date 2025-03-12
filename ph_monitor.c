@@ -6,7 +6,7 @@
 /*   By: iboukhss <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/11 21:05:14 by iboukhss          #+#    #+#             */
-/*   Updated: 2025/03/12 14:55:22 by iboukhss         ###   ########.fr       */
+/*   Updated: 2025/03/12 23:20:43 by iboukhss         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,7 +17,6 @@
 static void	check_last_meal_time(t_simulation *sim)
 {
 	long	last_meal_time;
-	long	current_time;
 	long	elapsed_time;
 	int		i;
 
@@ -27,20 +26,17 @@ static void	check_last_meal_time(t_simulation *sim)
 		pthread_mutex_lock(&sim->philos[i].meal_lock);
 		last_meal_time = sim->philos[i].last_meal_time;
 		pthread_mutex_unlock(&sim->philos[i].meal_lock);
-		if (last_meal_time == -1)
+		if (last_meal_time != -1)
 		{
-			i++;
-			continue ;
-		}
-		current_time = get_time_in_ms();
-		elapsed_time = current_time - last_meal_time;
-		if (elapsed_time > sim->time_to_die)
-		{
-			log_philo_state(&sim->philos[i], "died");
-			pthread_mutex_lock(&sim->run_lock);
-			sim->is_running = false;
-			pthread_mutex_unlock(&sim->run_lock);
-			return ;
+			elapsed_time = get_time_in_ms() - last_meal_time;
+			if (elapsed_time > sim->time_to_die)
+			{
+				log_philo_state(&sim->philos[i], "died");
+				pthread_mutex_lock(&sim->run_lock);
+				sim->is_running = false;
+				pthread_mutex_unlock(&sim->run_lock);
+				return ;
+			}
 		}
 		i++;
 	}

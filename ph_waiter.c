@@ -6,7 +6,7 @@
 /*   By: iboukhss <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/11 21:06:31 by iboukhss          #+#    #+#             */
-/*   Updated: 2025/03/11 23:50:57 by iboukhss         ###   ########.fr       */
+/*   Updated: 2025/03/12 23:17:23 by iboukhss         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,13 +29,10 @@ static void	process_wait_queue(t_simulation *sim)
 		{
 			return ;
 		}
-		else
-		{
-			pthread_mutex_lock(&wait->state_lock);
-			wait->state = EATING;
-			pthread_mutex_unlock(&wait->state_lock);
-			dequeue(&sim->wait_queue);
-		}
+		pthread_mutex_lock(&wait->state_lock);
+		wait->state = EATING;
+		pthread_mutex_unlock(&wait->state_lock);
+		dequeue(&sim->wait_queue);
 	}
 }
 
@@ -53,19 +50,18 @@ static void	process_request_queue(t_simulation *sim)
 		{
 			new_wait = dequeue(&sim->req_queue);
 			enqueue(&sim->wait_queue, new_wait);
+			return ;
 		}
-		else if (neighbors_are_eating(req))
+		if (neighbors_are_eating(req))
 		{
 			new_wait = dequeue(&sim->req_queue);
 			enqueue(&sim->wait_queue, new_wait);
+			return ;
 		}
-		else
-		{
-			pthread_mutex_lock(&req->state_lock);
-			req->state = EATING;
-			pthread_mutex_unlock(&req->state_lock);
-			dequeue(&sim->req_queue);
-		}
+		pthread_mutex_lock(&req->state_lock);
+		req->state = EATING;
+		pthread_mutex_unlock(&req->state_lock);
+		dequeue(&sim->req_queue);
 	}
 }
 

@@ -6,7 +6,7 @@
 /*   By: iboukhss <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 12:25:06 by iboukhss          #+#    #+#             */
-/*   Updated: 2025/03/12 14:16:59 by iboukhss         ###   ########.fr       */
+/*   Updated: 2025/03/12 23:50:03 by iboukhss         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,7 +19,8 @@ static int	init_user_input_parameters(t_simulation *sim, int argc, char **argv)
 {
 	if (argc < 5 || argc > 6)
 	{
-		printf("Usage: %s <philo_count> <time_to_die> <time_to_eat> <time_to_sleep> [meals_required]\n", argv[0]);
+		printf("Usage: %s <philo_count> <time_to_die> <time_to_eat> " \
+		"<time_to_sleep> [meals_required]\n", argv[0]);
 		return (1);
 	}
 	sim->philo_count = atoi(argv[1]);
@@ -39,14 +40,16 @@ static int	init_user_input_parameters(t_simulation *sim, int argc, char **argv)
 
 static int	create_threads(t_simulation *sim)
 {
-	int	i;
+	t_philosopher	*philos;
+	int				i;
 
 	pthread_create(&sim->monitor, NULL, monitor_routine, sim);
 	pthread_create(&sim->waiter, NULL, waiter_routine, sim);
+	philos = sim->philos;
 	i = 0;
 	while (i < sim->philo_count)
 	{
-		pthread_create(&sim->philos[i].thread, NULL, philo_routine, &sim->philos[i]);
+		pthread_create(&philos[i].thread, NULL, philo_routine, &philos[i]);
 		i++;
 	}
 	return (0);

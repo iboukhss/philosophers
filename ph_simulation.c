@@ -6,7 +6,7 @@
 /*   By: iboukhss <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/12 02:42:21 by iboukhss          #+#    #+#             */
-/*   Updated: 2025/03/12 14:35:58 by iboukhss         ###   ########.fr       */
+/*   Updated: 2025/03/12 23:42:36 by iboukhss         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,23 +16,25 @@
 
 static int	init_philosophers(t_simulation *sim)
 {
-	int	i;
+	t_philosopher	*philos;
+	int				i;
 
+	philos = sim->philos;
 	i = 0;
 	while (i < sim->philo_count)
 	{
-		sim->philos[i].id = i + 1;
-		sim->philos[i].left = &sim->philos[(i + sim->philo_count - 1) % sim->philo_count];
-		sim->philos[i].right = &sim->philos[(i + 1) % sim->philo_count];
-		sim->philos[i].left_fork = &sim->forks[i];
-		sim->philos[i].right_fork = &sim->forks[(i + 1) % sim->philo_count];
-		sim->philos[i].start_time = -1;
-		sim->philos[i].last_meal_time = -1;
-		sim->philos[i].meal_count = 0;
-		pthread_mutex_init(&sim->philos[i].meal_lock, NULL);
-		sim->philos[i].state = HUNGRY;
-		pthread_mutex_init(&sim->philos[i].state_lock, NULL);
-		sim->philos[i].sim = sim;
+		philos[i].id = i + 1;
+		philos[i].left = &philos[(i + sim->philo_count - 1) % sim->philo_count];
+		philos[i].right = &sim->philos[(i + 1) % sim->philo_count];
+		philos[i].left_fork = &sim->forks[i];
+		philos[i].right_fork = &sim->forks[(i + 1) % sim->philo_count];
+		philos[i].start_time = -1;
+		philos[i].last_meal_time = -1;
+		philos[i].meal_count = 0;
+		pthread_mutex_init(&philos[i].meal_lock, NULL);
+		philos[i].state = HUNGRY;
+		pthread_mutex_init(&philos[i].state_lock, NULL);
+		philos[i].sim = sim;
 		i++;
 	}
 	return (0);
