@@ -3,7 +3,7 @@ MAKEFLAGS += --no-print-directory
 NAME   ?= philo
 OBJDIR ?= build/release
 
-srcs := ph_main.c ph_queue.c ph_monitor.c ph_waiter.c ph_routine.c ph_utils.c
+srcs := ph_main.c ph_simulation.c ph_queue.c ph_monitor.c ph_waiter.c ph_routine.c ph_utils.c
 hdrs := ph_main.h
 objs := $(addprefix $(OBJDIR)/, $(srcs:.c=.o))
 deps := $(objs:.o=.d)
