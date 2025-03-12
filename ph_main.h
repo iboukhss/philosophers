@@ -6,7 +6,7 @@
 /*   By: iboukhss <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/19 21:35:24 by iboukhss          #+#    #+#             */
-/*   Updated: 2025/03/12 11:25:43 by iboukhss         ###   ########.fr       */
+/*   Updated: 2025/03/12 12:27:47 by iboukhss         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,6 +37,8 @@ typedef struct s_queue
 
 typedef struct s_simulation
 {
+	pthread_t		monitor;
+	pthread_t		waiter;
 	int				philo_count;
 	long			time_to_die;
 	long			time_to_eat;

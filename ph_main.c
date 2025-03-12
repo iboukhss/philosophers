@@ -6,7 +6,7 @@
 /*   By: iboukhss <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 12:25:06 by iboukhss          #+#    #+#             */
-/*   Updated: 2025/03/12 02:57:36 by iboukhss         ###   ########.fr       */
+/*   Updated: 2025/03/12 12:31:33 by iboukhss         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,11 +14,31 @@
 
 #include <stdio.h>
 
+static int	create_threads(t_simulation *sim)
+{
+	pthread_create(&sim->monitor, NULL, monitor_routine, sim);
+	pthread_create(&sim->waiter, NULL, waiter_routine, sim);
+	for (int i = 0; i < sim->philo_count; i++)
+	{
+		pthread_create(&sim->philos[i].thread, NULL, philo_routine, &sim->philos[i]);
+	}
+	return (0);
+}
+
+static int	join_threads(t_simulation *sim)
+{
+	pthread_join(sim->monitor, NULL);
+	pthread_join(sim->waiter, NULL);
+	for (int i = 0; i < sim->philo_count; i++)
+	{
+		pthread_join(sim->philos[i].thread, NULL);
+	}
+	return (0);
+}
+
 int	main(int argc, char **argv)
 {
 	t_simulation	sim;
-	pthread_t		monitor;
-	pthread_t		waiter;
 
 	if (argc < 5 || argc > 6)
 	{
@@ -26,19 +46,9 @@ int	main(int argc, char **argv)
 		return (1);
 	}
 	init_simulation(&sim, argc, argv);
+	create_threads(&sim);
 	sim.start_time = get_time_in_ms();
-	pthread_create(&monitor, NULL, monitor_routine, &sim);
-	pthread_create(&waiter, NULL, waiter_routine, &sim);
-	for (int i = 0; i < sim.philo_count; i++)
-	{
-		pthread_create(&sim.philos[i].thread, NULL, philo_routine, &sim.philos[i]);
-	}
-	pthread_join(monitor, NULL);
-	pthread_join(waiter, NULL);
-	for (int i = 0; i < sim.philo_count; i++)
-	{
-		pthread_join(sim.philos[i].thread, NULL);
-	}
+	join_threads(&sim);
 	sim.stop_time = get_time_in_ms();
 	printf("Total time elapsed: %ld milliseconds\n", sim.stop_time - sim.start_time);
 	destroy_simulation(&sim);
