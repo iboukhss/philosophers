@@ -21,7 +21,7 @@ $(OBJDIR)/%.o: %.c
 	@mkdir -p $(@D)
 	$(CC) $(CFLAGS) -MMD -MP -c -o $@ $<
 
--include $(DEPS)
+-include $(deps)
 
 release:
 	$(MAKE) NAME=philo OBJDIR=build/$@ CFLAGS="-Wall -Wextra -Werror" _target
