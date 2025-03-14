@@ -6,7 +6,7 @@
 /*   By: iboukhss <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/11 21:07:34 by iboukhss          #+#    #+#             */
-/*   Updated: 2025/03/12 11:25:45 by iboukhss         ###   ########.fr       */
+/*   Updated: 2025/03/14 14:01:52 by iboukhss         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,7 +23,7 @@ static void	thinking_phase(t_philosopher *philo)
 	while (simulation_is_running(philo->sim))
 	{
 		pthread_mutex_lock(&philo->state_lock);
-		can_eat = (philo->state == EATING);
+		can_eat = philo->can_eat;
 		pthread_mutex_unlock(&philo->state_lock);
 		if (can_eat)
 		{
@@ -33,27 +33,17 @@ static void	thinking_phase(t_philosopher *philo)
 	}
 }
 
-// NOTE: TSAN may complain about lock-order-inversion but I am fairly
-// confident that's a false positive.
 static void	eating_phase(t_philosopher *philo)
 {
 	if (simulation_is_running(philo->sim))
 	{
-		pthread_mutex_lock(philo->left_fork);
-		log_philo_state(philo, "has taken a fork");
-		pthread_mutex_lock(philo->right_fork);
-		log_philo_state(philo, "has taken a fork");
 		pthread_mutex_lock(&philo->meal_lock);
 		philo->last_meal_time = get_time_in_ms();
 		philo->meal_count++;
 		pthread_mutex_unlock(&philo->meal_lock);
 		log_philo_state(philo, "is eating");
 		usleep(philo->sim->time_to_eat * 1000);
-		pthread_mutex_unlock(philo->left_fork);
-		pthread_mutex_unlock(philo->right_fork);
-		pthread_mutex_lock(&philo->state_lock);
-		philo->state = HUNGRY;
-		pthread_mutex_unlock(&philo->state_lock);
+		release_forks(philo);
 	}
 }
 

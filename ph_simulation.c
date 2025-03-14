@@ -6,7 +6,7 @@
 /*   By: iboukhss <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/12 02:42:21 by iboukhss          #+#    #+#             */
-/*   Updated: 2025/03/12 23:42:36 by iboukhss         ###   ########.fr       */
+/*   Updated: 2025/03/14 00:00:59 by iboukhss         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,15 +24,13 @@ static int	init_philosophers(t_simulation *sim)
 	while (i < sim->philo_count)
 	{
 		philos[i].id = i + 1;
-		philos[i].left = &philos[(i + sim->philo_count - 1) % sim->philo_count];
-		philos[i].right = &sim->philos[(i + 1) % sim->philo_count];
 		philos[i].left_fork = &sim->forks[i];
 		philos[i].right_fork = &sim->forks[(i + 1) % sim->philo_count];
 		philos[i].start_time = -1;
 		philos[i].last_meal_time = -1;
+		philos[i].can_eat = false;
 		philos[i].meal_count = 0;
 		pthread_mutex_init(&philos[i].meal_lock, NULL);
-		philos[i].state = HUNGRY;
 		pthread_mutex_init(&philos[i].state_lock, NULL);
 		philos[i].sim = sim;
 		i++;
@@ -52,7 +50,9 @@ int	init_simulation(t_simulation *sim)
 	i = 0;
 	while (i < sim->philo_count)
 	{
-		pthread_mutex_init(&sim->forks[i], NULL);
+		sim->forks[i].owner_id = -1;
+		sim->forks[i].is_avail = true;
+		pthread_mutex_init(&sim->forks[i].lock, NULL);
 		i++;
 	}
 	init_queue(&sim->req_queue, sim->philo_count);
@@ -70,7 +70,7 @@ int	destroy_simulation(t_simulation *sim)
 	i = 0;
 	while (i < sim->philo_count)
 	{
-		pthread_mutex_destroy(&sim->forks[i]);
+		pthread_mutex_destroy(&sim->forks[i].lock);
 		i++;
 	}
 	i = 0;

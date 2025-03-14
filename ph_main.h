@@ -6,7 +6,7 @@
 /*   By: iboukhss <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/19 21:35:24 by iboukhss          #+#    #+#             */
-/*   Updated: 2025/03/12 14:16:39 by iboukhss         ###   ########.fr       */
+/*   Updated: 2025/03/14 01:29:45 by iboukhss         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,11 +19,12 @@
 // Forward declare
 typedef struct s_philosopher	t_philosopher;
 
-enum e_state
+typedef struct s_fork
 {
-	HUNGRY,
-	EATING,
-};
+	int				owner_id;
+	bool			is_avail;
+	pthread_mutex_t	lock;
+}	t_fork;
 
 typedef struct s_queue
 {
@@ -47,7 +48,7 @@ typedef struct s_simulation
 	long			start_time;
 	long			stop_time;
 	t_philosopher	*philos;
-	pthread_mutex_t	*forks;
+	t_fork			*forks;
 	t_queue			req_queue;
 	t_queue			wait_queue;
 	bool			is_running;
@@ -59,15 +60,13 @@ typedef struct s_philosopher
 {
 	int				id;
 	pthread_t		thread;
-	t_philosopher	*left;
-	t_philosopher	*right;
-	pthread_mutex_t	*left_fork;
-	pthread_mutex_t	*right_fork;
+	t_fork			*left_fork;
+	t_fork			*right_fork;
 	long			start_time;
 	long			last_meal_time;
+	bool			can_eat;
 	int				meal_count;
 	pthread_mutex_t	meal_lock;
-	enum e_state	state;
 	pthread_mutex_t	state_lock;
 	t_simulation	*sim;
 }	t_philosopher;
@@ -88,6 +87,9 @@ void			*philo_routine(void *arg);
 long			get_time_in_ms(void);
 void			log_philo_state(t_philosopher *philo, const char *msg);
 bool			simulation_is_running(t_simulation *sim);
-bool			neighbors_are_eating(t_philosopher *philo);
+
+bool			forks_are_available(t_philosopher *philo);
+int				take_forks(t_philosopher *philo);
+int				release_forks(t_philosopher *philo);
 
 #endif

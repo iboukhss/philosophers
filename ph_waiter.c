@@ -6,7 +6,7 @@
 /*   By: iboukhss <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/11 21:06:31 by iboukhss          #+#    #+#             */
-/*   Updated: 2025/03/12 23:17:23 by iboukhss         ###   ########.fr       */
+/*   Updated: 2025/03/14 14:36:55 by iboukhss         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,20 +18,18 @@ static void	process_wait_queue(t_simulation *sim)
 {
 	t_philosopher	*wait;
 
-	while (1)
+	while (simulation_is_running(sim))
 	{
 		wait = peek(&sim->wait_queue);
 		if (!wait)
 		{
 			return ;
 		}
-		if (neighbors_are_eating(wait))
+		if (!forks_are_available(wait))
 		{
 			return ;
 		}
-		pthread_mutex_lock(&wait->state_lock);
-		wait->state = EATING;
-		pthread_mutex_unlock(&wait->state_lock);
+		take_forks(wait);
 		dequeue(&sim->wait_queue);
 	}
 }
@@ -39,28 +37,22 @@ static void	process_wait_queue(t_simulation *sim)
 static void	process_request_queue(t_simulation *sim)
 {
 	t_philosopher	*req;
-	t_philosopher	*wait;
 	t_philosopher	*new_wait;
 
-	req = peek(&sim->req_queue);
-	if (req)
+	if (simulation_is_running(sim))
 	{
-		wait = peek(&sim->wait_queue);
-		if (wait && (req == wait->left || req == wait->right))
+		req = peek(&sim->req_queue);
+		if (!req)
+		{
+			return ;
+		}
+		if (!forks_are_available(req))
 		{
 			new_wait = dequeue(&sim->req_queue);
 			enqueue(&sim->wait_queue, new_wait);
 			return ;
 		}
-		if (neighbors_are_eating(req))
-		{
-			new_wait = dequeue(&sim->req_queue);
-			enqueue(&sim->wait_queue, new_wait);
-			return ;
-		}
-		pthread_mutex_lock(&req->state_lock);
-		req->state = EATING;
-		pthread_mutex_unlock(&req->state_lock);
+		take_forks(req);
 		dequeue(&sim->req_queue);
 	}
 }

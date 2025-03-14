@@ -6,7 +6,7 @@
 /*   By: iboukhss <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/11 21:05:14 by iboukhss          #+#    #+#             */
-/*   Updated: 2025/03/12 23:20:43 by iboukhss         ###   ########.fr       */
+/*   Updated: 2025/03/14 14:09:31 by iboukhss         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -47,7 +47,7 @@ static void	check_meal_count(t_simulation *sim)
 	int	meal_count;
 	int	i;
 
-	if (sim->meals_required > 0)
+	if (simulation_is_running(sim) && sim->meals_required > 0)
 	{
 		i = 0;
 		while (i < sim->philo_count)
