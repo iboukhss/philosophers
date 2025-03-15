@@ -6,7 +6,7 @@
 /*   By: iboukhss <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/11 21:06:31 by iboukhss          #+#    #+#             */
-/*   Updated: 2025/03/14 14:36:55 by iboukhss         ###   ########.fr       */
+/*   Updated: 2025/03/15 15:21:01 by iboukhss         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,35 +25,36 @@ static void	process_wait_queue(t_simulation *sim)
 		{
 			return ;
 		}
-		if (!forks_are_available(wait))
+		if (forks_are_available(wait))
 		{
-			return ;
+			take_forks(wait);
+			dequeue(&sim->wait_queue);
 		}
-		take_forks(wait);
-		dequeue(&sim->wait_queue);
+		usleep(500);
 	}
 }
 
 static void	process_request_queue(t_simulation *sim)
 {
 	t_philosopher	*req;
-	t_philosopher	*new_wait;
 
-	if (simulation_is_running(sim))
+	while (simulation_is_running(sim))
 	{
 		req = peek(&sim->req_queue);
 		if (!req)
 		{
 			return ;
 		}
-		if (!forks_are_available(req))
+		if (forks_are_available(req))
 		{
-			new_wait = dequeue(&sim->req_queue);
-			enqueue(&sim->wait_queue, new_wait);
-			return ;
+			take_forks(req);
+			dequeue(&sim->req_queue);
 		}
-		take_forks(req);
-		dequeue(&sim->req_queue);
+		else
+		{
+			dequeue(&sim->req_queue);
+			enqueue(&sim->wait_queue, req);
+		}
 	}
 }
 
@@ -66,7 +67,6 @@ void	*waiter_routine(void *arg)
 	{
 		process_wait_queue(sim);
 		process_request_queue(sim);
-		usleep(500);
 	}
 	return (NULL);
 }
