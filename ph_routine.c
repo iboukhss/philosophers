@@ -6,7 +6,7 @@
 /*   By: iboukhss <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/11 21:07:34 by iboukhss          #+#    #+#             */
-/*   Updated: 2025/03/14 14:01:52 by iboukhss         ###   ########.fr       */
+/*   Updated: 2025/03/15 15:37:41 by iboukhss         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,9 +22,9 @@ static void	thinking_phase(t_philosopher *philo)
 	log_philo_state(philo, "is thinking");
 	while (simulation_is_running(philo->sim))
 	{
-		pthread_mutex_lock(&philo->state_lock);
+		pthread_mutex_lock(&philo->meal_lock);
 		can_eat = philo->can_eat;
-		pthread_mutex_unlock(&philo->state_lock);
+		pthread_mutex_unlock(&philo->meal_lock);
 		if (can_eat)
 		{
 			return ;

@@ -6,7 +6,7 @@
 /*   By: iboukhss <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/19 21:35:24 by iboukhss          #+#    #+#             */
-/*   Updated: 2025/03/14 01:29:45 by iboukhss         ###   ########.fr       */
+/*   Updated: 2025/03/15 15:47:28 by iboukhss         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -63,31 +63,35 @@ typedef struct s_philosopher
 	t_fork			*left_fork;
 	t_fork			*right_fork;
 	long			start_time;
-	long			last_meal_time;
 	bool			can_eat;
+	long			last_meal_time;
 	int				meal_count;
 	pthread_mutex_t	meal_lock;
-	pthread_mutex_t	state_lock;
 	t_simulation	*sim;
 }	t_philosopher;
 
+// Main constructor/destructor
 int				init_simulation(t_simulation *sim);
 int				destroy_simulation(t_simulation *sim);
 
+// FIFO queue implementation
 int				init_queue(t_queue *q, int capacity);
 int				destroy_queue(t_queue *q);
 int				enqueue(t_queue *q, t_philosopher *philo);
 t_philosopher	*dequeue(t_queue *q);
 t_philosopher	*peek(t_queue *q);
 
+// Main routines
 void			*monitor_routine(void *arg);
 void			*waiter_routine(void *arg);
 void			*philo_routine(void *arg);
 
+// Main utilities
 long			get_time_in_ms(void);
 void			log_philo_state(t_philosopher *philo, const char *msg);
 bool			simulation_is_running(t_simulation *sim);
 
+// Fork utilities
 bool			forks_are_available(t_philosopher *philo);
 int				take_forks(t_philosopher *philo);
 int				release_forks(t_philosopher *philo);

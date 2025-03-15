@@ -6,7 +6,7 @@
 /*   By: iboukhss <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/12 02:42:21 by iboukhss          #+#    #+#             */
-/*   Updated: 2025/03/14 00:00:59 by iboukhss         ###   ########.fr       */
+/*   Updated: 2025/03/15 15:37:23 by iboukhss         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,7 +31,6 @@ static int	init_philosophers(t_simulation *sim)
 		philos[i].can_eat = false;
 		philos[i].meal_count = 0;
 		pthread_mutex_init(&philos[i].meal_lock, NULL);
-		pthread_mutex_init(&philos[i].state_lock, NULL);
 		philos[i].sim = sim;
 		i++;
 	}
@@ -77,7 +76,6 @@ int	destroy_simulation(t_simulation *sim)
 	while (i < sim->philo_count)
 	{
 		pthread_mutex_destroy(&sim->philos[i].meal_lock);
-		pthread_mutex_destroy(&sim->philos[i].state_lock);
 		i++;
 	}
 	pthread_mutex_destroy(&sim->run_lock);
